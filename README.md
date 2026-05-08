@@ -98,6 +98,27 @@ CSV outputs:
 
 ---
 
+<img width="1024" height="240" alt="image" src="https://github.com/user-attachments/assets/03dd47fd-641b-4f8a-b9f1-b2c1e01929db" />
+
+
+## Figure Interpretation (RLlib Benchmark)
+
+This figure summarizes the RLlib benchmark for **MAFS5370 Assignment 2 (Super Tic-Tac-Toe)** under the proposed two-phase curriculum: **deterministic placement → stochastic placement**.  
+The **red dashed vertical line** marks the iteration where training switches from fixed execution to the assignment’s stochastic execution rule (**1/2** chance the chosen cell is accepted; otherwise a neighbor is selected with **1/16** probability per adjacent cell, and the move may be **forfeited** if invalid/occupied).
+
+### Train Episode Length Mean (Left)
+- PPO shows a clear downward trend in mean episode length over training, indicating that games terminate faster as the self-play policies become more decisive and reach terminal states earlier.
+- IMPALA and APPO remain comparatively stable, suggesting different optimization/exploration dynamics under the same environment and action-masking setup.
+
+### Win Rates: Deterministic vs Stochastic (Middle/Right)
+- The win-rate panels compare performance under **deterministic evaluation** versus **stochastic evaluation** for each algorithm.
+- Across algorithms, stochastic evaluation typically yields lower and noisier win rates than deterministic evaluation. This is expected because probabilistic execution and possible forfeits reduce the agent’s control over outcomes and increase variance.
+- IMPALA attains the strongest peaks under deterministic evaluation, while stochastic curves are generally lower, highlighting a robustness/generalization gap introduced by the assignment’s stochastic action execution even when training includes a stochastic phase.
+
+### Takeaway
+Overall, the plots demonstrate (1) how a **fixed → random** curriculum can stabilize early training, and (2) how the assignment’s true stochastic dynamics make robust play harder to learn and evaluate, motivating multi-algorithm comparison under consistent RLlib settings.
+
+
 ## How to Run
 1. Open the notebook:
    - `mafs5370-project2-benchmark-rllib-train70Det30Stoch.ipynb`
