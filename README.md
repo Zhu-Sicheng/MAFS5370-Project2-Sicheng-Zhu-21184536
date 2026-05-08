@@ -98,7 +98,7 @@ CSV outputs:
 
 ---
 
-<img width="1024" height="240" alt="image" src="https://github.com/user-attachments/assets/03dd47fd-641b-4f8a-b9f1-b2c1e01929db" />
+<img width="2090" height="490" alt="image" src="https://github.com/user-attachments/assets/d2745969-eac7-419f-bc30-8c4ada351c8b" />
 
 
 ## Figure Interpretation (RLlib Benchmark)
