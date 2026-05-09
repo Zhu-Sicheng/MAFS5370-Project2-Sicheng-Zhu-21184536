@@ -1,17 +1,21 @@
 # MAFS5370 — Assignment 2 (Super Tic-Tac-Toe)
 
 ## Overview
-This project implements and trains reinforcement learning agents for **Super Tic-Tac-Toe**, a stochastic variant of tic-tac-toe with a **triangular board** and **probabilistic action execution**.  
-The main goal is to build a correct environment and train agents using **Ray RLlib (Torch backend)**, then compare multiple RL algorithms under consistent evaluation settings.
+This project implements and trains reinforcement learning agents for **Super Tic-Tac-Toe**, a stochastic variant of tic-tac-toe with a **triangular board** and **probabilistic action execution**. The main goals are:
+- Build a correct environment that matches the assignment rules.
+- Train agents using **Ray RLlib (Torch backend)** under consistent settings.
+- Benchmark multiple algorithms, then improve learning stability under **sparse terminal rewards**.
 
 Key contributions:
-- **RLlib-based** multi-agent training (Torch-only) with action masking.
-- A **two-phase curriculum** concept: **deterministic placement → stochastic placement** (fixed training → random training).
-- A faithful **stochastic move execution model** (1/2 accept, otherwise 1/16 per neighbor, with forfeits).
-- **Multi-algorithm benchmark** across **PPO, IMPALA, APPO**, including plotting and CSV export.
+- **RLlib-based** multi-agent self-play with **action masking** (legal-move constraints).
+- A **two-phase curriculum**: **deterministic placement → stochastic placement** (fixed training → random training).
+- A faithful **stochastic move execution model**: **1/2** accept the chosen cell; otherwise a neighbor is selected with **1/16** probability per adjacent cell; invalid/occupied targets lead to **forfeits**.
+- A **baseline benchmark** across **PPO, IMPALA, APPO** (same environment + evaluation protocol).
+- A follow-up **reward shaping** variant to address **reward sparsity**, trained with **PPO** due to limited compute/time.
 
-Notebook:
-- `mafs5370-project2-benchmark-rllib-train70Det30Stoch.ipynb`
+Notebooks:
+- Baseline benchmark (multi-algorithm): `mafs5370-project2-benchmark-rllib-train70Det30Stoch.ipynb`
+- Reward shaping (PPO-only): `mafs5370-project2-ppo-shaping.ipynb`
 
 ---
 
@@ -26,7 +30,7 @@ Win conditions:
 
 Stochastic execution (core randomness):
 - When a player chooses a cell, with probability **1/2** the mark is placed at the chosen cell.
-- Otherwise, the executed move is randomly selected from the **8 adjacent neighbors**; each neighbor has probability **1/16** overall (because rejection is 1/2 and neighbor direction is uniform over 8).
+- Otherwise, the executed move is randomly selected from the **8 adjacent neighbors**; each neighbor has probability **1/16** overall (rejection is 1/2 and neighbor direction is uniform over 8).
 - If the random neighbor is **outside the board** or **occupied**, the move is **forfeited** (no placement occurs).
 
 ---
@@ -41,42 +45,61 @@ State and action:
 - **Observation**: flattened board + an **action mask** to prevent choosing occupied cells.
 
 Triangular board encoding:
-- The environment uses a 3×3 block layout but only 6 blocks are enabled via a `valid_mask`, forming the triangular board.
-
-Stochastic placement model:
-- Controlled by `stochastic_moves` and `accept_prob` (global), and also supports **per-agent overrides**:
-  - `stochastic_moves_by_agent`
-  - `accept_prob_by_agent`
+- A 3×3 block layout is used internally, but only 6 blocks are enabled via a `valid_mask`, forming the triangular board.
 
 Forfeits:
 - If the executed target is invalid (off-board) or occupied, the step proceeds with **no placement**, matching the assignment’s “forfeited move” rule.
 
+---
+
 ## Training Design: Fixed → Random (Curriculum)
-To stabilize early learning and then match the true stochastic dynamics, the notebook is structured to support a **two-stage training curriculum**:
+To stabilize early learning and then match the true stochastic dynamics, training follows a two-stage curriculum:
 
 1. **Fixed / deterministic placement stage**
-   - Intended setting: `stochastic_moves=False`, `accept_prob=1.0`
-   - Rationale: reduces transition noise early and helps the agent learn basic positional structure.
+   - Setting: `stochastic_moves=False`, `accept_prob=1.0`
+   - Rationale: reduces transition noise and helps agents learn basic positional structure.
 
 2. **Random / stochastic placement stage**
-   - Assignment setting: `stochastic_moves=True`, `accept_prob=0.5`
-   - Rationale: trains the agent under the real game dynamics (1/2 accept, neighbor noise, forfeits).
-
-In addition, the notebook supports **asymmetric stochasticity** (useful for analysis), e.g.:
-- **player1 stochastic placement** vs **player2 deterministic placement**
+   - Setting: `stochastic_moves=True`, `accept_prob=0.5`
+   - Rationale: trains under the real game dynamics (accept/reject, neighbor noise, forfeits).
 
 ---
 
-## Algorithms Compared
-The notebook benchmarks multiple RLlib algorithms under the same environment and evaluation loop:
+## Baseline: Multi-Algorithm Benchmark (Sparse Terminal Rewards)
+Notebook: `mafs5370-project2-benchmark-rllib-train70Det30Stoch.ipynb`
+
+Algorithms compared under the same environment and evaluation loop:
 - **PPO**
 - **IMPALA**
 - **APPO**
 
-For each algorithm, the notebook logs:
-- training iteration timing
-- mean episode length
-- win rates for `player1` / `player2` under different evaluation modes
+What is logged:
+- Training iteration timing
+- Mean episode length
+- Win rates for `player1` / `player2` under **deterministic** vs **stochastic** evaluation modes
+
+Motivation:
+- This baseline uses the standard sparse terminal reward structure (**win/loss/draw**), which reflects the assignment objective directly but can be challenging to learn under stochastic execution.
+
+---
+
+## Improvement: Reward Shaping (PPO-Only)
+Notebook: `mafs5370-project2-ppo-shaping.ipynb`
+
+Why reward shaping:
+- In this game, rewards are naturally **sparse** (mostly at terminal states), while action execution is **stochastic** and can lead to **forfeits**. This combination increases variance and makes policy learning unstable.
+- Reward shaping introduces a denser learning signal to encourage progress toward winning configurations.
+
+What is added:
+- A **shaping reward** based on **incremental pattern formation**, computed per move for the acting player:
+  - Newly formed **3-in-a-row** and **4-in-a-row** patterns contribute additional reward (delta-based, not state-based).
+- Anti-exploitation safeguards to prevent “farming” shaping reward instead of winning:
+  - A global **scaling factor** for shaping rewards
+  - A small **step penalty** to discourage unnecessary prolonging of games
+  - A per-episode **cap** on total shaping reward
+
+Why PPO only:
+- Due to limited compute/time budget, the shaping experiment focuses on **PPO** to validate the effectiveness of denser rewards without running a full multi-algorithm sweep again.
 
 ---
 
@@ -84,51 +107,35 @@ For each algorithm, the notebook logs:
 Evaluation is performed by running multiple self-play episodes and computing:
 - `p1_win`, `p2_win`, `draw`
 
-The notebook can evaluate under:
-- **deterministic mode** (fixed placement)
-- **stochastic mode** (assignment’s randomness, optionally asymmetric by player)
+Evaluation modes:
+- **Deterministic mode** (fixed placement)
+- **Stochastic mode** (assignment’s probabilistic execution)
 
 Plots produced:
-- mean episode length vs iteration
-- win rates vs iteration
+- Mean episode length vs iteration
+- Win rates vs iteration
 
-CSV outputs:
-- `train_details.csv` (per-evaluation checkpoint rows)
-- `train_overall.csv` (final summary per algorithm)
+CSV outputs (baseline notebook):
+- `train_details_0507.csv` (per-evaluation checkpoint rows)
+- `train_overall_0507.csv` (final summary per algorithm)
 
 ---
-
-<img width="2090" height="490" alt="image" src="https://github.com/user-attachments/assets/d2745969-eac7-419f-bc30-8c4ada351c8b" />
-
 
 ## Figure Interpretation
 
-This figure summarizes the result under the proposed two-phase curriculum: **deterministic placement → stochastic placement**.  
-The **red dashed vertical line** marks the iteration where training switches from fixed execution to the assignment’s stochastic execution rule (**1/2** chance the chosen cell is accepted; otherwise a neighbor is selected with **1/16** probability per adjacent cell, and the move may be **forfeited** if invalid/occupied).
+<img width="2090" height="490" alt="benchmark-plot" src="https://github.com/user-attachments/assets/d2745969-eac7-419f-bc30-8c4ada351c8b" />
 
-### Train Episode Length Mean (Left)
-- PPO shows a clear downward trend in mean episode length over training, indicating that games terminate faster as the self-play policies become more decisive and reach terminal states earlier.
-- IMPALA and APPO remain comparatively stable, suggesting different optimization/exploration dynamics under the same environment and action-masking setup.
+This figure summarizes the benchmark results under the two-phase curriculum: **deterministic placement → stochastic placement**.
 
-### Win Rates: Deterministic vs Stochastic (Middle/Right)
-- The win-rate panels compare performance under **deterministic evaluation** versus **stochastic evaluation** for each algorithm.
-- Across algorithms, stochastic evaluation typically yields lower and noisier win rates than deterministic evaluation. This is expected because probabilistic execution and possible forfeits reduce the agent’s control over outcomes and increase variance.
-- IMPALA attains the strongest peaks under deterministic evaluation, while stochastic curves are generally lower, highlighting a robustness/generalization gap introduced by the assignment’s stochastic action execution even when training includes a stochastic phase.
-
-### Takeaway
-Overall, the plots demonstrate 
-(1) how a **fixed → random** curriculum can stabilize early training, and 
-(2) how the assignment’s true stochastic dynamics make robust play harder to learn and evaluate, motivating multi-algorithm comparison under consistent RLlib settings.
-
-
-## How to Run
-1. Open the notebook:
-   - `mafs5370-project2-benchmark-rllib-train50Det50Stoch.ipynb`
-2. Run cells top-to-bottom.
-3. Adjust experiment knobs at the top of the notebook (e.g., iterations, evaluation frequency, randomness settings) as needed.
+- **Train Episode Length Mean (Left)**: PPO exhibits a clear downward trend in mean episode length, suggesting that the self-play policies become more decisive and reach terminal outcomes faster. IMPALA and APPO remain comparatively stable, reflecting different learning dynamics under the same environment and action masking.
+- **Win Rates (Middle/Right)**: Stochastic evaluation typically yields lower and noisier win rates than deterministic evaluation because probabilistic execution and forfeits reduce control and increase variance. IMPALA shows strong peaks in deterministic evaluation, while stochastic performance is generally lower, highlighting the robustness gap introduced by the assignment’s stochastic dynamics.
 
 ---
 
-## Notes
-- The environment includes an optional setting to force a number of **opening random moves** for exploration. This is not part of the original game rules, but it can help avoid overly deterministic openings during training.
-- Action masking keeps policies focused on legal moves; forfeits still occur due to stochastic neighbor execution (off-board/occupied outcomes).
+## How to Run
+1. Open a notebook:
+   - Baseline benchmark: `mafs5370-project2-benchmark-rllib-train70Det30Stoch.ipynb`
+   - Reward shaping PPO: `mafs5370-project2-ppo-shaping.ipynb`
+2. Run cells top-to-bottom.
+3. Adjust experiment knobs at the top (iterations, evaluation frequency, curriculum fraction, etc.) if needed.
+
