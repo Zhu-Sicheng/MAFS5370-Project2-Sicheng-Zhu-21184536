@@ -101,9 +101,9 @@ CSV outputs:
 <img width="2090" height="490" alt="image" src="https://github.com/user-attachments/assets/d2745969-eac7-419f-bc30-8c4ada351c8b" />
 
 
-## Figure Interpretation (RLlib Benchmark)
+## Figure Interpretation
 
-This figure summarizes the RLlib benchmark for **MAFS5370 Assignment 2 (Super Tic-Tac-Toe)** under the proposed two-phase curriculum: **deterministic placement → stochastic placement**.  
+This figure summarizes the result under the proposed two-phase curriculum: **deterministic placement → stochastic placement**.  
 The **red dashed vertical line** marks the iteration where training switches from fixed execution to the assignment’s stochastic execution rule (**1/2** chance the chosen cell is accepted; otherwise a neighbor is selected with **1/16** probability per adjacent cell, and the move may be **forfeited** if invalid/occupied).
 
 ### Train Episode Length Mean (Left)
@@ -116,12 +116,14 @@ The **red dashed vertical line** marks the iteration where training switches fro
 - IMPALA attains the strongest peaks under deterministic evaluation, while stochastic curves are generally lower, highlighting a robustness/generalization gap introduced by the assignment’s stochastic action execution even when training includes a stochastic phase.
 
 ### Takeaway
-Overall, the plots demonstrate (1) how a **fixed → random** curriculum can stabilize early training, and (2) how the assignment’s true stochastic dynamics make robust play harder to learn and evaluate, motivating multi-algorithm comparison under consistent RLlib settings.
+Overall, the plots demonstrate 
+(1) how a **fixed → random** curriculum can stabilize early training, and 
+(2) how the assignment’s true stochastic dynamics make robust play harder to learn and evaluate, motivating multi-algorithm comparison under consistent RLlib settings.
 
 
 ## How to Run
 1. Open the notebook:
-   - `mafs5370-project2-benchmark-rllib-train70Det30Stoch.ipynb`
+   - `mafs5370-project2-benchmark-rllib-train50Det50Stoch.ipynb`
 2. Run cells top-to-bottom.
 3. Adjust experiment knobs at the top of the notebook (e.g., iterations, evaluation frequency, randomness settings) as needed.
 
