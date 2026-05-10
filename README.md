@@ -126,8 +126,8 @@ Plots produced:
 - Win rates vs iteration
 
 CSV outputs (baseline notebook):
-- `train_details_0507.csv` (per-evaluation checkpoint rows)
-- `train_overall_0507.csv` (final summary per algorithm)
+- `train_details.csv` (per-evaluation checkpoint rows)
+- `train_overall.csv` (final summary per algorithm)
 
 ---
 
