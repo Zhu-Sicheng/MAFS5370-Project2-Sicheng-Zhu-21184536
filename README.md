@@ -14,7 +14,7 @@ Key contributions:
 - A follow-up **reward shaping** variant to address **reward sparsity**, trained with **PPO** due to limited compute/time.
 
 Notebooks:
-- Baseline benchmark (multi-algorithm): `mafs5370-project2-benchmark-rllib-train50Det50Stoch.ipynb`
+- Baseline benchmark (multi-algorithm): `mafs5370-project2-rllib-train50Det50Stoch.ipynb`
 - Reward shaping (PPO-only): `mafs5370-project2-ppo-shaping.ipynb`
 
 ---
@@ -68,15 +68,14 @@ To stabilize early learning and then match the true stochastic dynamics, trainin
 ## Opening Random Moves (Exploration Heuristic)
 Both notebooks include an optional exploration heuristic: forcing the first *N* actions of each episode to be random valid moves (`opening_random_moves`).
 
-- Baseline benchmark uses a larger value (e.g., `OPENING_RANDOM_MOVES_TRAIN = 25`).
-- The shaping notebook uses a smaller value (e.g., `OPENING_RANDOM_MOVES_TRAIN = 5`) to keep more steps policy-controlled while still avoiding identical openings.
+- In our current runs, both the baseline and shaping experiments use the same value (e.g., `OPENING_RANDOM_MOVES_TRAIN = 25`) to keep the comparison fair.
 
-This mechanism is **not part of the original assignment rules**. In our analysis we focus on **win rates under the curriculum settings**, and note that forced opening randomness is applied symmetrically within each run (both agents experience the same randomized opening phase). In addition, when using an asymmetric setup (stochastic execution vs deterministic execution), the dominant effect comes from the execution noise/forfeits rather than small differences in opening random length, so the win-rate trends remain interpretable.
+This mechanism is **not part of the original assignment rules**. In our analysis we focus on **win rates under the curriculum settings**, and note that forced opening randomness is applied symmetrically within each run (both agents experience the same randomized opening phase).
 
 ---
 
 ## Baseline: Multi-Algorithm Benchmark (Sparse Terminal Rewards)
-Notebook: `mafs5370-project2-benchmark-rllib-train70Det30Stoch.ipynb`
+Notebook: `mafs5370-project2-rllib-train50Det50Stoch.ipynb`
 
 Algorithms compared under the same environment and evaluation loop:
 - **PPO**
@@ -126,8 +125,8 @@ Plots produced:
 - Win rates vs iteration
 
 CSV outputs (baseline notebook):
-- `train_details.csv` (per-evaluation checkpoint rows)
-- `train_overall.csv` (final summary per algorithm)
+- `train_details_0507.csv` (per-evaluation checkpoint rows)
+- `train_overall_0507.csv` (final summary per algorithm)
 
 ---
 
@@ -142,25 +141,22 @@ This figure summarizes the benchmark results under the two-phase curriculum: **d
 
 ---
 
-<img width="2090" height="490" alt="957d73c1-68bb-4cd1-8bda-d5c931f2ce39" src="https://github.com/user-attachments/assets/029edd29-2c5a-44b6-bf8d-66f0948619f2" />
-
-
 ## PPO Reward Shaping Result (Additional Analysis)
 The shaping variant (`mafs5370-project2-ppo-shaping.ipynb`) keeps the same RLlib self-play setup and curriculum, but adds a denser learning signal via incremental **3-in-a-row / 4-in-a-row** shaping rewards with safeguards (scaling, per-step penalty, per-episode cap).
 
 Observed behavior from the logged checkpoints:
-- **Faster game resolution**: the mean episode length drops quickly from ~41 steps to ~12–14 steps and then stabilizes, indicating more decisive trajectories.
-- **Win-rate levels**: `stoch_p1` stays around ~0.39 on average and `det_p1` around ~0.33 on average across checkpoints (in this run), suggesting the policy exhibits slightly better performance under stochastic evaluation than deterministic evaluation.
+- **Shorter episodes over time**: the mean episode length gradually decreases (e.g., from ~47 to ~32 steps in one run), suggesting the self-play policies reach terminal outcomes more efficiently.
+- **Win-rate dynamics**: in one run, `stoch_p1` stays around ~0.45–0.53 while `det_p1` drifts downward below 0.5, illustrating that shaping can stabilize learning under stochastic evaluation but does not guarantee monotonic improvement in deterministic-mode self-play.
 
 Interpretation:
 - The shaping reward reduces the sparsity of feedback and can speed up the emergence of structured play (reflected by shorter episodes).
-- Due to stochastic execution and forfeits, win rates can remain noisy and below 0.5 even when policies become more decisive; the key signal is whether the stochastic-mode performance becomes more stable and avoids collapse.
+- Due to stochastic execution and forfeits (and the non-stationary nature of self-play), win rates can remain noisy; the key signal is whether performance remains stable and avoids collapse across checkpoints.
 
 ---
 
 ## How to Run
 1. Open a notebook:
-   - Baseline benchmark: `mafs5370-project2-benchmark-rllib-train70Det30Stoch.ipynb`
+   - Baseline benchmark: `mafs5370-project2-rllib-train50Det50Stoch.ipynb`
    - Reward shaping PPO: `mafs5370-project2-ppo-shaping.ipynb`
 2. Run cells top-to-bottom.
 3. Adjust experiment knobs at the top (iterations, evaluation frequency, curriculum fraction, etc.) if needed.
