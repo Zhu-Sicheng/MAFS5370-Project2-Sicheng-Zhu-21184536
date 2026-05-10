@@ -140,8 +140,9 @@ This figure summarizes the benchmark results under the two-phase curriculum: **d
 - **Win Rates (Middle/Right)**: Stochastic evaluation typically yields lower and noisier win rates than deterministic evaluation because probabilistic execution and forfeits reduce control and increase variance. IMPALA shows strong peaks in deterministic evaluation, while stochastic performance is generally lower, highlighting the robustness gap introduced by the assignment’s stochastic dynamics.
 
 ---
+<img width="2090" height="490" alt="1a4b749d0fc4882b7f804dfb410ba2a6" src="https://github.com/user-attachments/assets/f32dcf61-4e2b-46cb-b46a-002eb90f9630" />
 
-## PPO Reward Shaping Result (Additional Analysis)
+## PPO Reward Shaping Result
 The shaping variant (`mafs5370-project2-ppo-shaping.ipynb`) keeps the same RLlib self-play setup and curriculum, but adds a denser learning signal via incremental **3-in-a-row / 4-in-a-row** shaping rewards with safeguards (scaling, per-step penalty, per-episode cap).
 
 Observed behavior from the logged checkpoints:
