@@ -14,7 +14,7 @@ Key contributions:
 - A follow-up **reward shaping** variant to address **reward sparsity**, trained with **PPO** due to limited compute/time.
 
 Notebooks:
-- Baseline benchmark (multi-algorithm): `mafs5370-project2-benchmark-rllib-train70Det30Stoch.ipynb`
+- Baseline benchmark (multi-algorithm): `mafs5370-project2-benchmark-rllib-train50Det50Stoch.ipynb`
 - Reward shaping (PPO-only): `mafs5370-project2-ppo-shaping.ipynb`
 
 ---
