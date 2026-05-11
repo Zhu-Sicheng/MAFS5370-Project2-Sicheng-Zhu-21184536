@@ -157,8 +157,6 @@ Interpretation:
 - Due to stochastic execution and forfeits (and the non-stationary nature of self-play), win rates can remain noisy; the key signal is whether performance remains stable and avoids collapse across checkpoints.
 
 ---
----
-
 ## Results Comparison (Baseline vs PPO Reward Shaping)
 
 To make the comparison as fair as possible, both notebooks use the same core setup:
@@ -169,7 +167,7 @@ To make the comparison as fair as possible, both notebooks use the same core set
 
 ### Final-checkpoint summary (it = 1000)
 
-**Baseline (sparse terminal rewards)** from `mafs5370-project2-rllib-train50Det50Stoch.ipynb` / `train_overall_0507.csv`:
+**Baseline (sparse terminal rewards)**
 
 | Algo   | train_len_mean | det_p1 | stoch_p1 |
 |--------|----------------|--------|----------|
@@ -177,7 +175,7 @@ To make the comparison as fair as possible, both notebooks use the same core set
 | IMPALA | 41.93          | 0.844  | 0.808    |
 | APPO   | 48.01          | 0.580  | 0.634    |
 
-**PPO + reward shaping** from `mafs5370-project2-ppo-shaping.ipynb` (logged checkpoint line at it=1000):
+**PPO + reward shaping** from `mafs5370-project2-ppo-shaping.ipynb`
 
 | Variant            | train_len_mean | det_p1 | stoch_p1 |
 |-------------------|----------------|--------|----------|
@@ -189,12 +187,12 @@ To make the comparison as fair as possible, both notebooks use the same core set
 - **Episodes get slightly shorter**: `train_len_mean` decreases from **33.53 → 32.2**, consistent with faster convergence to terminal outcomes.
 - **Deterministic win rate stays similar** at the end (`det_p1` ~ **0.384 → 0.386**), meaning shaping mainly helps under stochastic execution rather than boosting deterministic self-play dominance.
 
-### Baseline algorithm context (why shaping was still useful)
+### Baseline algorithm context
 
 - Under the same sparse terminal reward, **IMPALA** and **APPO** can reach higher win rates than PPO in this specific run (especially IMPALA).
 - The goal of shaping here is **not** to “beat IMPALA/APPO” under equal compute, but to **reduce reward sparsity / variance** and make PPO learning **more stable under stochastic moves + forfeits**, which is reflected most clearly in `stoch_p1` and the episode-length trend.
 
-### Interpretation note (self-play non-stationarity)
+### Interpretation note
 
 - `det_p1` / `stoch_p1` are the win rates of the policy mapped to `player1` against `player2` under the evaluation mode. Because the two agents are trained as separate policies and self-play is non-stationary, these rates **do not have to be ~0.5**, and can fluctuate across checkpoints.
 - Stochastic evaluation is inherently noisier because rejected moves and forfeits reduce action control and increase variance.
